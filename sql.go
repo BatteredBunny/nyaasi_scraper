@@ -13,12 +13,11 @@ func initializeApplication(config *Config) (db *sql.DB, err error) {
 		log.Fatal(err)
 	}
 
-	db.SetMaxOpenConns(1)
-
 	sqlStmt := `
 	create table if not exists posts (
 	    id integer not null primary key,
 	    deleted boolean,
+		title text,
 	    category text,
 	    submitter text,
 	    information text,
@@ -42,24 +41,24 @@ func initializeApplication(config *Config) (db *sql.DB, err error) {
 		edited_date datetime,
 		post_id integer not null,
 		last_fetched datetime,
-		
-		FOREIGN KEY (post_id) REFERENCES posts (post_id) 
+
+		FOREIGN KEY (post_id) REFERENCES posts (post_id)
 	);
 	create table if not exists folders (
 	    id integer not null primary key,
 	    folder_name text,
 	    post_id integer not null,
-	                                   
-		FOREIGN KEY (post_id) REFERENCES posts (post_id) 
+
+		FOREIGN KEY (post_id) REFERENCES posts (post_id)
 	);
 	create table if not exists files (
 	    file_name text not null,
 	    file_size integer not null,
-	    folder_id integer not null, 
+	    folder_id integer not null,
 	    post_id integer not null,
-	                                 
+
 	    FOREIGN KEY (folder_id) REFERENCES folders (folder_id)
-		FOREIGN KEY (post_id) REFERENCES posts (post_id) 
+		FOREIGN KEY (post_id) REFERENCES posts (post_id)
 	);
 	`
 
