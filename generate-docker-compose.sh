@@ -15,6 +15,8 @@ end
 
 set slice $(math floor $max / $count)
 set estimated_hours $(math $max / $count x $request_length_ms / 1000 / 60 / 60)
+set entries_per_hour $(math $max/$estimated_hours)
+
 argparse 'novpn' -- $argv
 
 # docker compose header
@@ -62,7 +64,9 @@ for i in $(seq $count)
 end
 
 set tmp $(mktemp)
-echo Estimated completion time: $estimated_hours hours | cat > $tmp
+
+echo Entries per hour: $entries_per_hour\nEstimated completion time: $estimated_hours hours | cat > $tmp
+
 echo $compose | cat > generated-docker-compose.yml
 
 bat $tmp generated-docker-compose.yml
