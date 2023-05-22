@@ -101,6 +101,7 @@ func main() {
 	}()
 
 	for currentID := config.StartID + 1; currentID <= newestPostID && !shouldExit; currentID++ {
+		// TODO: optimize
 		if config.SkipExisting {
 			var tempID int
 			if err = db.QueryRow("SELECT id FROM posts WHERE id=?", currentID).Scan(&tempID); err == nil {
@@ -128,7 +129,7 @@ func main() {
 				log.Fatal(err)
 			}
 
-			if _, err = tx.Exec("INSERT OR IGNORE INTO posts (id, deleted, category, submitter, information, file_size, date, seeders, leechers, torrent_url, magnet_url, completed, info_hash, description) VALUES (?, false, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", currentID, info.Category, info.Submitter, info.Information, info.FileSize, info.Date, info.Seeders, info.Leechers, info.TorrentUrl, info.MagnetUrl, info.Completed, info.InfoHash, info.Description); err != nil {
+			if _, err = tx.Exec("INSERT OR IGNORE INTO posts (id, deleted, title, category, submitter, information, file_size, date, seeders, leechers, torrent_url, magnet_url, completed, info_hash, description) VALUES (?, false, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", currentID, info.Title, info.Category, info.Submitter, info.Information, info.FileSize, info.Date, info.Seeders, info.Leechers, info.TorrentUrl, info.MagnetUrl, info.Completed, info.InfoHash, info.Description); err != nil {
 				tx.Rollback()
 				log.Fatal(err)
 			}
@@ -138,9 +139,9 @@ func main() {
 				log.Fatal(err)
 			}
 
+			// updates comment info
+			var editedDate any
 			for _, comment := range info.Comments {
-				// updates comment info
-				var editedDate any
 				if err = tx.QueryRow("SELECT edited_date FROM comments WHERE id=?", comment.ID).Scan(&editedDate); errors.Is(err, sql.ErrNoRows) {
 					if _, err = tx.Exec("INSERT INTO comments (id, submitter, content, date, post_id, deleted, edited_date, last_fetched) VALUES (?, ?, ?, ?, ?, false, ?, datetime('now'))", comment.ID, comment.Submitter, comment.Content, comment.Date, currentID, comment.EditedDate); err != nil {
 						tx.Rollback()
@@ -157,21 +158,22 @@ func main() {
 				}
 			}
 
-			rows, err := tx.Query("SELECT id, submitter, content, date, edited_date FROM comments WHERE post_id=?", currentID)
+			rows, err := tx.Query("SELECT id FROM comments WHERE post_id=?", currentID)
 			if err != nil {
 				tx.Rollback()
 				log.Fatal(err)
 			}
 
-			var comment Comment
+			// marks missing comments as deleted
+			var commentID int
 			for rows.Next() {
-				if err = rows.Scan(&comment.ID, &comment.Submitter, &comment.Content, &comment.Date, &comment.EditedDate); err != nil {
+				if err = rows.Scan(&commentID); err != nil {
 					tx.Rollback()
 					log.Fatal(err)
 				}
 
-				if !Contains(info.Comments, comment) {
-					if _, err = tx.Exec("UPDATE comments SET deleted=true, last_fetched=datetime('now') WHERE id=?", comment.ID); err != nil {
+				if !CommentsContains(info.Comments, commentID) {
+					if _, err = tx.Exec("UPDATE comments SET deleted=true, last_fetched=datetime('now') WHERE id=?", commentID); err != nil {
 						tx.Rollback()
 						log.Fatal(err)
 					}
@@ -219,15 +221,15 @@ func main() {
 }
 
 func RandomSleep(date *time.Time) {
-	sleepTime := 300 + rand.Intn(500)
+	sleepTime := 300 + rand.Intn(400)
 	fmt.Println("💤", sleepTime, "ms")
 	time.Sleep(time.Duration(sleepTime) * time.Millisecond)
 	*date = time.Now()
 }
 
-func Contains[T comparable](array []T, value T) bool {
-	for _, j := range array {
-		if j == value {
+func CommentsContains(comments []Comment, ID int) bool {
+	for _, comment := range comments {
+		if comment.ID == ID {
 			return true
 		}
 	}

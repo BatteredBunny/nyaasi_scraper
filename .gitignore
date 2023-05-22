@@ -2,3 +2,7 @@
 nyaasi_scraper
 .idea/
 result
+app/
+docker-compose.yml
+generated-docker-compose.yml
+keys/
