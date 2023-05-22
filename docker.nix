@@ -5,6 +5,6 @@
     copyToRoot = pkgs.cacert;
 
     config = {
-        entrypoint = ["${default}/bin/nyaasi_scraper" "--skip" "--database" "file:/app/database.db?cache=shared&_busy_timeout=1000000"];
+        entrypoint = ["${default}/bin/nyaasi_scraper" "--database" "file:/app/database.db?cache=shared&_busy_timeout=1000000"];
     };
 }

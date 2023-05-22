@@ -45,10 +45,11 @@ const DefaultStartID = 0
 const DefaultDatabase = "file:database.db?cache=shared"
 
 type Config struct {
-	StartID      int
-	EndID        int
-	Database     string
-	SkipExisting bool
+	StartID         int
+	EndID           int
+	Database        string
+	SkipExisting    bool
+	ContinueInRange bool
 }
 
 func main() {
@@ -62,6 +63,7 @@ func main() {
 	flag.IntVar(&config.EndID, "end", newestPostID, "ID to end scraping on")
 	flag.StringVar(&config.Database, "database", DefaultDatabase, "sqlite database path")
 	flag.BoolVar(&config.SkipExisting, "skip", false, "skips existing post entries")
+	flag.BoolVar(&config.ContinueInRange, "continue-in-range", false, "skips large chunks of existing entries")
 	flag.Parse()
 
 	signalChan := make(chan os.Signal, 1)
@@ -100,8 +102,24 @@ func main() {
 		shouldExit = true
 	}()
 
-	for currentID := config.StartID + 1; currentID <= newestPostID && !shouldExit; currentID++ {
-		// TODO: optimize
+	fmt.Println("Starting from", config.StartID+1, "and ending on:", config.EndID)
+
+	// basically latest indexed post but in the range specified in flags
+	var rangeSkip int
+	if config.ContinueInRange {
+		if err = db.QueryRow("SELECT id FROM posts WHERE id BETWEEN ? AND ? ORDER BY id DESC LIMIT 1", config.StartID, config.EndID).Scan(&rangeSkip); err == nil {
+			rangeSkip += 1
+			fmt.Println("Skipping in range", rangeSkip)
+		}
+	}
+
+	for currentID := config.StartID + 1; currentID <= config.EndID && !shouldExit; currentID++ {
+		if config.ContinueInRange {
+			if currentID <= rangeSkip {
+				continue
+			}
+		}
+
 		if config.SkipExisting {
 			var tempID int
 			if err = db.QueryRow("SELECT id FROM posts WHERE id=?", currentID).Scan(&tempID); err == nil {
