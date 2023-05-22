@@ -56,7 +56,7 @@ for i in $(seq $count)
     end
 
     set -a compose "\
-   command: --start $start --end $end
+   command: --start $start --end $end --continue-in-range
     volumes:
       - ./app:/app/"\n
 end
