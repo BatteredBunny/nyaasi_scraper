@@ -27,7 +27,7 @@ func CommentsContains(comments []Comment, ID int) bool {
 }
 
 // Finds the newest torrent by reading the rss feed
-func newestPost() (id int, err error) {
+func NewestPost() (id int, err error) {
 	fp := gofeed.NewParser()
 	feed, err := fp.ParseURL("https://" + Domain + "/?page=rss")
 	if err != nil {

@@ -38,7 +38,7 @@ var InsertDeletedPost = "INSERT OR IGNORE INTO posts (id, deleted) VALUES (?, tr
 var rangeSkipQuery = "SELECT id FROM posts WHERE id BETWEEN ? AND ? ORDER BY id DESC LIMIT 1"
 
 func main() {
-	newestPostID, err := newestPost()
+	newestPostID, err := NewestPost()
 	if err != nil {
 		log.Panic(err)
 	}
@@ -60,23 +60,23 @@ func main() {
 		syscall.SIGQUIT, // kill -SIGQUIT XXXX
 	)
 
-	db, err := initializeApplication(&config)
+	db, err := InitializeApplication(&config)
 	defer db.Close()
 	if err != nil {
 		log.Panic(err)
 	}
 
 	if config.StartID == DefaultStartID {
-		config.StartID, err = latestIndexedPost(db)
+		config.StartID, err = LatestIndexedPost(db)
 		if err != nil {
 			config.StartID = DefaultStartID
 		}
 	}
 
-	pageInfoFinder := newPageInfoFinder()
+	pageInfoFinder := NewPageInfoFinder()
 
 	var (
-		info        *PageInfo
+		info        PageInfo
 		status      int
 		currentTime = time.Now()
 		shouldExit  = false
@@ -120,7 +120,7 @@ func main() {
 
 		// Try until parsing works
 		for {
-			if status, info, err = pageInfoFinder.getBasicInfo(currentID); err == nil {
+			if status, info, err = pageInfoFinder.GetBasicInfo(currentID); err == nil {
 				break
 			}
 
