@@ -1,5 +1,9 @@
 # Nyaa.si Scraper
 
+## My results
+
+In total the database came to the size of 1.8gb with 1314329 torrents, with 12 vpn setup it took about 27h hours to complete scraping.
+
 ## Usage guide
 
 1. Fill out $count in `generate-docker-compose.sh`, $count should include how many scrapers you want running
