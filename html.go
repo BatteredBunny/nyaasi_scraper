@@ -19,7 +19,7 @@ type PageInfoFinder struct {
 	client fasthttp.Client
 }
 
-func newPageInfoFinder() (p PageInfoFinder) {
+func NewPageInfoFinder() (p PageInfoFinder) {
 	p.req.Header.SetMethod(fasthttp.MethodGet)
 	p.url.SetScheme("https")
 	p.url.SetHost(Domain)
@@ -27,7 +27,7 @@ func newPageInfoFinder() (p PageInfoFinder) {
 	return
 }
 
-func (c *PageInfoFinder) getBasicInfo(id int) (status int, info *PageInfo, err error) {
+func (c *PageInfoFinder) GetBasicInfo(id int) (status int, info PageInfo, err error) {
 	c.url.SetPath("/view/" + strconv.Itoa(id))
 	c.req.SetURI(&c.url)
 	if err = c.client.Do(&c.req, &c.resp); err != nil {
@@ -85,23 +85,24 @@ type RawPageInfo struct {
 	RawComments []RawComment `goquery:".comment-panel"`
 }
 
-func (info *RawPageInfo) Process() (*PageInfo, error) {
-	var Comments []Comment
+func (info *RawPageInfo) Process() (p PageInfo, err error) {
+	var comments []Comment
 	for _, rawComment := range info.RawComments {
-		c, err := rawComment.Process()
+		var c *Comment
+		c, err = rawComment.Process()
 		if err != nil {
-			return nil, err
+			return
 		}
 
-		Comments = append(Comments, *c)
+		comments = append(comments, *c)
 	}
 
-	Date, err := time.Parse("2006-01-02 15:04 UTC", info.RawDate)
+	date, err := time.Parse("2006-01-02 15:04 UTC", info.RawDate)
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	Category, _ := strings.CutPrefix(info.RawCategory, "/?c=")
+	category, _ := strings.CutPrefix(info.RawCategory, "/?c=")
 
 	// humanize can't handle sizes such as "0 Bytes", so it has to be parsed manually
 	var FileSize uint64
@@ -111,16 +112,16 @@ func (info *RawPageInfo) Process() (*PageInfo, error) {
 		FileSize, err = humanize.ParseBytes(info.RawFileSize)
 	}
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	return &PageInfo{
+	p = PageInfo{
 		Title:       info.Title,
-		Category:    Category,
+		Category:    category,
 		Submitter:   info.Submitter,
 		Information: info.Information,
 		FileSize:    FileSize,
-		Date:        Date,
+		Date:        date,
 		Seeders:     info.Seeders,
 		Leechers:    info.Leechers,
 		Completed:   info.Completed,
@@ -128,8 +129,9 @@ func (info *RawPageInfo) Process() (*PageInfo, error) {
 		Description: info.Description,
 		TorrentUrl:  info.TorrentUrl,
 		MagnetUrl:   info.MagnetUrl,
-		Comments:    Comments,
-	}, nil
+		Comments:    comments,
+	}
+	return
 }
 
 type Comment struct {
@@ -148,31 +150,33 @@ type RawComment struct {
 	RawEditedDate string `goquery:".comment-details > small,[title]"`         // 2021-07-01 18:51:45
 }
 
-func (r *RawComment) Process() (*Comment, error) {
-	RawID, _ := strings.CutPrefix(r.RawID, "torrent-comment")
-	ID, err := strconv.Atoi(RawID)
+func (r *RawComment) Process() (c *Comment, err error) {
+	rawID, _ := strings.CutPrefix(r.RawID, "torrent-comment")
+	id, err := strconv.Atoi(rawID)
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	Date, err := time.Parse("2006-01-02 15:04 UTC", r.RawDate)
+	date, err := time.Parse("2006-01-02 15:04 UTC", r.RawDate)
 	if err != nil {
-		return nil, err
+		return
 	}
 
 	var EditedDate any
 	if r.RawEditedDate != "" {
 		EditedDate, err = time.Parse("2006-01-02 15:04:05", r.RawEditedDate)
 		if err != nil {
-			return nil, err
+			return
 		}
 	}
 
-	return &Comment{
+	c = &Comment{
 		Submitter:  r.Submitter,
 		Content:    r.Content,
-		Date:       Date,
+		Date:       date,
 		EditedDate: EditedDate,
-		ID:         ID,
-	}, nil
+		ID:         id,
+	}
+
+	return
 }

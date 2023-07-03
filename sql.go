@@ -6,7 +6,7 @@ import (
 	"log"
 )
 
-func initializeApplication(config *Config) (db *sql.DB, err error) {
+func InitializeApplication(config *Config) (db *sql.DB, err error) {
 	db, err = sql.Open("sqlite3", config.Database)
 	if err != nil {
 		log.Fatal(err)
@@ -66,7 +66,7 @@ func initializeApplication(config *Config) (db *sql.DB, err error) {
 	return
 }
 
-func latestIndexedPost(db *sql.DB) (id int, err error) {
+func LatestIndexedPost(db *sql.DB) (id int, err error) {
 	err = db.QueryRow("SELECT id FROM posts ORDER BY id DESC LIMIT 1").Scan(&id)
 
 	return
