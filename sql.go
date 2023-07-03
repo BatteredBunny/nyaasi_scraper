@@ -2,9 +2,8 @@ package main
 
 import (
 	"database/sql"
-	"log"
-
 	_ "github.com/mattn/go-sqlite3"
+	"log"
 )
 
 func initializeApplication(config *Config) (db *sql.DB, err error) {
@@ -42,14 +41,14 @@ func initializeApplication(config *Config) (db *sql.DB, err error) {
 		post_id integer not null,
 		last_fetched datetime,
 
-		FOREIGN KEY (post_id) REFERENCES posts (post_id)
+		FOREIGN KEY (post_id) REFERENCES posts (id)
 	);
 	create table if not exists folders (
 	    id integer not null primary key,
 	    folder_name text,
 	    post_id integer not null,
 
-		FOREIGN KEY (post_id) REFERENCES posts (post_id)
+		FOREIGN KEY (post_id) REFERENCES posts (id)
 	);
 	create table if not exists files (
 	    file_name text not null,
@@ -57,12 +56,18 @@ func initializeApplication(config *Config) (db *sql.DB, err error) {
 	    folder_id integer not null,
 	    post_id integer not null,
 
-	    FOREIGN KEY (folder_id) REFERENCES folders (folder_id)
-		FOREIGN KEY (post_id) REFERENCES posts (post_id)
+	    FOREIGN KEY (folder_id) REFERENCES folders (id),
+		FOREIGN KEY (post_id) REFERENCES posts (id)
 	);
 	`
 
 	_, err = db.Exec(sqlStmt)
+
+	return
+}
+
+func latestIndexedPost(db *sql.DB) (id int, err error) {
+	err = db.QueryRow("SELECT id FROM posts ORDER BY id DESC LIMIT 1").Scan(&id)
 
 	return
 }

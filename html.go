@@ -22,7 +22,7 @@ type PageInfoFinder struct {
 func newPageInfoFinder() (p PageInfoFinder) {
 	p.req.Header.SetMethod(fasthttp.MethodGet)
 	p.url.SetScheme("https")
-	p.url.SetHost(DOMAIN)
+	p.url.SetHost(Domain)
 
 	return
 }
