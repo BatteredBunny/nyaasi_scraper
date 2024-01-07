@@ -50,7 +50,7 @@ for i in $(seq $count)
 
     set -a compose "\
   nyaasi_scraper$i:
-    image: ghcr.io/ayes-web/nyaasi_scraper
+    image: ghcr.io/BatteredBunny/nyaasi_scraper
     container_name: nyaasi_scraper$i"\n
 
     if test not $_flag_novpn
