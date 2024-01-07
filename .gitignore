@@ -7,3 +7,4 @@ docker-compose.yml
 generated-docker-compose.yml
 keys/
 data/
+.direnv
