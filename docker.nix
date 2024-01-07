@@ -4,7 +4,7 @@
   nix2container,
 }:
 nix2container.packages.${pkgs.system}.nix2container.buildImage {
-  name = "ghcr.io/BatteredBunny/nyaasi_scraper";
+  name = "ghcr.io/batteredbunny/nyaasi_scraper";
   tag = "latest";
 
   copyToRoot = pkgs.cacert;
